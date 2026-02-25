@@ -53,6 +53,7 @@ from .dicts import (
     DefaultDictVariable,
     DictItemsVariable,
     DictKeySetVariable,
+    DunderDictVariable,
     FrozensetVariable,
     MappingProxyVariable,
     NNModuleHooksDictVariable,
