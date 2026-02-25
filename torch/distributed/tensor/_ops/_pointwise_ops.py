@@ -67,8 +67,10 @@ _UNARY_LINEAR_RULES: list[list[Placement]] = [
 
 binary_additive_ops = [
     aten.add.Tensor,
+    aten.add.out,
     aten.add_.Tensor,
     aten.sub.Tensor,
+    aten.sub.out,
     aten.sub_.Tensor,
 ]
 
@@ -86,8 +88,8 @@ _BINARY_ADDITIVE_RULES: list[list[Placement]] = [
 ]
 
 # mul: partials propagate through either arg. div: only through numerator.
-binary_mul_ops = [aten.mul.Tensor, aten.mul_.Tensor]
-binary_div_ops = [aten.div.Tensor, aten.div_.Tensor]
+binary_mul_ops = [aten.mul.Tensor, aten.mul.out, aten.mul_.Tensor]
+binary_div_ops = [aten.div.Tensor, aten.div.out, aten.div_.Tensor]
 
 # _UNARY_LINEAR_RULES handles the scalar promotion case: Python's __mul__/__truediv__
 # promote scalars to 0-dim tensors, so aten.mul.Scalar dispatches as aten.mul.Tensor
@@ -117,38 +119,55 @@ scalar_linear_ops = [
 # because P(max) offsets can push inputs outside the valid domain.
 non_decreasing_unary_ops = [
     aten.asinh.default,
+    aten.asinh.out,
     aten.asinh_.default,
     aten.atan.default,
+    aten.atan.out,
     aten.atan_.default,
     aten.ceil.default,
+    aten.ceil.out,
     aten.ceil_.default,
     aten.erf.default,
+    aten.erf.out,
     aten.erf_.default,
     aten.exp.default,
+    aten.exp.out,
     aten.exp_.default,
     aten.exp2.default,
+    aten.exp2.out,
     aten.exp2_.default,
     aten.expm1.default,
+    aten.expm1.out,
     aten.expm1_.default,
     aten.floor.default,
+    aten.floor.out,
     aten.floor_.default,
     aten.relu.default,
+    aten.relu.out,
     aten.relu_.default,
     aten.round.decimals,
+    aten.round.decimals_out,
     aten.round.default,
+    aten.round.out,
     aten.round_.decimals,
     aten.round_.default,
     aten.sgn.default,
+    aten.sgn.out,
     aten.sgn_.default,
     aten.sigmoid.default,
+    aten.sigmoid.out,
     aten.sigmoid_.default,
     aten.sign.default,
+    aten.sign.out,
     aten.sign_.default,
     aten.sinh.default,
+    aten.sinh.out,
     aten.sinh_.default,
     aten.tanh.default,
+    aten.tanh.out,
     aten.tanh_.default,
     aten.trunc.default,
+    aten.trunc.out,
     aten.trunc_.default,
 ]
 
@@ -161,8 +180,10 @@ _MONOTONIC_INCREASING_RULES: list[list[Placement]] = [
 # Note: acos excluded due to domain constraints [-1,1] causing validation failures
 non_increasing_unary_ops: list[OpOverload] = [
     aten.erfc.default,
+    aten.erfc.out,
     aten.erfc_.default,
     aten.special_erfcx.default,
+    aten.special_erfcx.out,
 ]
 
 _MONOTONIC_DECREASING_RULES: list[list[Placement]] = [
@@ -171,7 +192,7 @@ _MONOTONIC_DECREASING_RULES: list[list[Placement]] = [
 ]
 
 # neg is linear: -(A1 + A2) = -A1 + -A2
-neg_ops = [aten.neg.default, aten.neg_.default]
+neg_ops = [aten.neg.default, aten.neg.out, aten.neg_.default]
 
 _NEG_RULES: list[list[Placement]] = _UNARY_LINEAR_RULES + _MONOTONIC_DECREASING_RULES
 
@@ -179,10 +200,13 @@ _NEG_RULES: list[list[Placement]] = _UNARY_LINEAR_RULES + _MONOTONIC_DECREASING_
 # These ops preserve the exact value for each element, only transforming units/representation
 all_partial_preserving_unary_ops = [
     aten.deg2rad.default,
+    aten.deg2rad.out,
     aten.deg2rad_.default,
     aten.nan_to_num.default,
+    aten.nan_to_num.out,
     aten.nan_to_num_.default,
     aten.rad2deg.default,
+    aten.rad2deg.out,
     aten.rad2deg_.default,
 ]
 
@@ -194,23 +218,31 @@ _ALL_PARTIAL_PRESERVING_RULES: list[list[Placement]] = [
 # max-preserving: P(max)+P(max)->P(max) because max(max(a),max(b)) = max(a,b)
 monotonic_max_preserving_binary_ops = [
     aten.clamp_min.Tensor,
+    aten.clamp_min.Tensor_out,
     aten.fmax.default,
+    aten.fmax.out,
     aten.maximum.default,
+    aten.maximum.out,
     prims.fmax.default,
 ]
 
 # min-preserving: P(min)+P(min)->P(min) because min(min(a),min(b)) = min(a,b)
 monotonic_min_preserving_binary_ops = [
     aten.clamp_max.Tensor,
+    aten.clamp_max.Tensor_out,
     aten.fmin.default,
+    aten.fmin.out,
     aten.minimum.default,
+    aten.minimum.out,
     prims.fmin.default,
 ]
 
 # Monotonic increasing in both args but don't preserve any specific partial type.
 monotonic_binary_ops = [
     aten.logaddexp.default,
+    aten.logaddexp.out,
     aten.logaddexp2.default,
+    aten.logaddexp2.out,
 ]
 
 _monotone_binary_base_rules: list[list[Placement]] = [
@@ -239,7 +271,6 @@ linear_pointwise_ops: dict[OpOverload, int] = {
     **dict.fromkeys(scalar_linear_ops, 0),
     **dict.fromkeys(neg_ops, 0),
 }
-
 pointwise_ops = [
     # please keep the entries below alphabetically sorted
     aten.__ilshift__.Scalar,
@@ -261,7 +292,6 @@ pointwise_ops = [
     aten.acosh.out,
     aten.acosh_.default,
     aten.add.Scalar,
-    aten.add.out,
     aten.add_.Scalar,
     aten.addcdiv.default,
     aten.addcdiv.out,
@@ -274,8 +304,6 @@ pointwise_ops = [
     aten.asin.default,
     aten.asin.out,
     aten.asin_.default,
-    aten.asinh.out,
-    aten.atan.out,
     aten.atan2.default,
     aten.atan2.out,
     aten.atan2_.default,
@@ -320,14 +348,11 @@ pointwise_ops = [
     aten.bitwise_xor.Tensor_out,
     aten.bitwise_xor_.Scalar,
     aten.bitwise_xor_.Tensor,
-    aten.ceil.out,
     aten.clamp.default,
     aten.clamp.Tensor,
     aten.clamp.out,
     aten.clamp_.default,
     aten.clamp_.Tensor,
-    aten.clamp_min.default,
-    aten.clamp_max.default,
     aten.clip.default,
     aten.clip.out,
     aten.clip_.default,
@@ -346,26 +371,19 @@ pointwise_ops = [
     aten.cosh.default,
     aten.cosh.out,
     aten.cosh_.default,
-    aten.deg2rad.out,
     aten.digamma.default,
     aten.digamma.out,
     aten.digamma_.default,
     aten.div.Tensor_mode,
-    aten.div.out,
     aten.div.out_mode,
     aten.div_.Tensor_mode,
     aten.eq.Tensor,
     aten.eq.Tensor_out,
     aten.eq.Scalar,
     aten.eq.Scalar_out,
-    aten.erf.out,
-    aten.erfc.out,
     aten.erfinv.default,
     aten.erfinv.out,
     aten.erfinv_.default,
-    aten.exp.out,
-    aten.exp2.out,
-    aten.expm1.out,
     aten.float_power.Scalar,
     aten.float_power.Scalar_out,
     aten.float_power.Tensor_Scalar,
@@ -374,11 +392,6 @@ pointwise_ops = [
     aten.float_power.Tensor_Tensor_out,
     aten.float_power_.Scalar,
     aten.float_power_.Tensor,
-    aten.floor.out,
-    aten.fmax.default,
-    aten.fmax.out,
-    aten.fmin.default,
-    aten.fmin.out,
     aten.fmod.Scalar,
     aten.fmod.Scalar_out,
     aten.fmod.Tensor,
@@ -449,8 +462,6 @@ pointwise_ops = [
     aten.log2.out,
     aten.log2_.default,
     aten.log_.default,
-    aten.logaddexp.out,
-    aten.logaddexp2.out,
     aten.logical_and.default,
     aten.logical_and.out,
     aten.logical_and_.default,
@@ -468,15 +479,12 @@ pointwise_ops = [
     aten.logit_.default,
     aten.masked_fill.Scalar,
     aten.masked_fill_.Scalar,
-    aten.mul.out,
     aten.mvlgamma.default,
     aten.mvlgamma.out,
     aten.mvlgamma_.default,
     aten.native_dropout_backward.default,
     aten.native_dropout_backward.out,
-    aten.nan_to_num.out,
     aten.ne.Scalar,
-    aten.neg.out,
     aten.nextafter.default,
     aten.nextafter.out,
     aten.nextafter_.default,
@@ -495,7 +503,6 @@ pointwise_ops = [
     aten.reciprocal.default,
     aten.reciprocal.out,
     aten.reciprocal_.default,
-    aten.rad2deg.out,
     aten.remainder.Scalar,
     aten.remainder.Scalar_Tensor,
     aten.remainder.Scalar_out,
@@ -503,15 +510,10 @@ pointwise_ops = [
     aten.remainder.Tensor_out,
     aten.remainder_.Scalar,
     aten.remainder_.Tensor,
-    aten.round.decimals_out,
-    aten.round.out,
     aten.rsqrt.default,
     aten.rsqrt.out,
     aten.rsqrt_.default,
     aten.rsub.Scalar,
-    aten.sgn.out,
-    aten.sigmoid.out,
-    aten.sign.out,
     aten.signbit.default,
     aten.signbit.out,
     aten.silu.default,
@@ -522,8 +524,6 @@ pointwise_ops = [
     aten.sinc.default,
     aten.sinc.out,
     aten.sinc_.default,
-    aten.sinh.out,
-    aten.special_erfcx.out,
     aten.sqrt.default,
     aten.sqrt.out,
     aten.sqrt_.default,
@@ -531,14 +531,11 @@ pointwise_ops = [
     aten.square.out,
     aten.square_.default,
     aten.sub.Scalar,
-    aten.sub.out,
     aten.sub_.Scalar,
     aten.tan.default,
     aten.tan.out,
     aten.tan_.default,
-    aten.tanh.out,
     aten.true_divide.Tensor,
-    aten.trunc.out,
     aten.where.self,
     aten.where.self_out,
     aten.xlogy.OutScalar_Self,
@@ -920,6 +917,7 @@ for op in linear_pointwise_ops:
             op, schema_info=RuntimeSchemaInfo(static_kwargkey=["out"])
         )(linear_pointwise_strategy)
 
+# Keep .out variants on old register_op_strategy path
 for op in partial_preserving_ops:
     register_op_strategy(op, schema_info=RuntimeSchemaInfo(static_kwargkey=["out"]))(
         partial_preserving_pointwise_strategy
@@ -932,12 +930,6 @@ register_op_strategy(
 register_op_strategy(
     prims.copy_to.default, schema_info=RuntimeSchemaInfo(static_kwargkey=["out"])
 )(copy_strategy)
-
-# Keep .out variants on old register_op_strategy path until PR2
-for op in partial_preserving_ops:
-    register_op_strategy(op, schema_info=RuntimeSchemaInfo(static_kwargkey=["out"]))(
-        partial_preserving_pointwise_strategy
-    )
 
 # Keep pointwise_ops on old path (single-dim registrations above take precedence)
 for op in pointwise_ops:
@@ -1032,6 +1024,13 @@ register_single_dim_strategy(
         ]
     )
 )
+
+# Generic pointwise ops: just Shard + Replicate strategies
+for op in pointwise_ops:
+    register_single_dim_strategy(
+        op, schema_info=RuntimeSchemaInfo(static_kwargkey=["out"])
+    )(_make_partial_strategy())
+
 
 # TODO: add all for_each ops
 for_each_ops = [
